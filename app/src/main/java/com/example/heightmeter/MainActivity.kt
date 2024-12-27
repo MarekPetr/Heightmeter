@@ -7,6 +7,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.result.contract.ActivityResultContracts
 import android.Manifest
+import android.content.pm.PackageManager
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.widget.LinearLayout
 import androidx.camera.core.CameraSelector
@@ -17,6 +18,7 @@ import androidx.core.content.ContextCompat
 import com.google.common.util.concurrent.ListenableFuture
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -25,9 +27,13 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.LifecycleOwner
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.sp
 
 class MainActivity : ComponentActivity() {
@@ -38,22 +44,32 @@ class MainActivity : ComponentActivity() {
         val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
 
         setContent {
-            Surface() {
-                val isPermissionGranted = remember { mutableStateOf<Boolean?>(null) }
+            Surface {
+                val context = LocalContext.current
+                val isPermissionGranted = remember {
+                    mutableStateOf<Boolean?>(
+                        ContextCompat.checkSelfPermission(
+                            context, Manifest.permission.CAMERA
+                        ) == PackageManager.PERMISSION_GRANTED
+                    )
+                }
+
                 val launcher =
-                    rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
-                        isGranted -> isPermissionGranted.value = isGranted
+                    rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+                        isPermissionGranted.value = isGranted
                     }
+
                 when (isPermissionGranted.value) {
-                    true -> CameraPreview(cameraProviderFuture)
-                    false -> Text("Permission denied. Please grant camera permission.")
-                    null -> TextButton(
+                    true -> Box {
+                        CameraPreview(cameraProviderFuture)
+                    }
+                    else -> TextButton(
                         onClick = { launcher.launch(Manifest.permission.CAMERA) },
-                        modifier= Modifier.fillMaxSize(),
-                        ) {
+                        modifier = Modifier.fillMaxSize(),
+                    ) {
                         Text(
                             text = "Tap to grant camera permission",
-                            color= androidx.compose.ui.graphics.Color.Black,
+                            color = androidx.compose.ui.graphics.Color.Black,
                             fontSize = 20.sp
                         )
                     }
@@ -62,7 +78,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
-
 
 @Composable
 fun CameraPreview(cameraProviderFuture: ListenableFuture<ProcessCameraProvider>) {
