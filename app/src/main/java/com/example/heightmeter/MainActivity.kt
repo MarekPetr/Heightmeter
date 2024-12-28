@@ -17,21 +17,35 @@ import androidx.camera.core.CameraSelector
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
+import com.example.heightmeter.ui.theme.Orange
 import com.google.common.util.concurrent.ListenableFuture
 import kotlin.math.acos
 import kotlin.math.sqrt
@@ -70,6 +84,7 @@ class MainActivity : ComponentActivity(), SensorEventListener {
                 when (isPermissionGranted.value) {
                     true -> Box {
                         CameraPreview(cameraProviderFuture)
+                        ControlsLayout()
                     }
                     else -> TextButton(
                         onClick = { launcher.launch(Manifest.permission.CAMERA) },
@@ -106,7 +121,7 @@ class MainActivity : ComponentActivity(), SensorEventListener {
     }
 
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
-        TODO("Not yet implemented")
+        return
     }
 
     private fun computedAngle(): Double {
@@ -202,4 +217,61 @@ fun bindPreview(cameraProvider: ProcessCameraProvider,
     cameraProvider.unbindAll() // Unbind use cases before rebinding
     val camera = cameraProvider.bindToLifecycle(lifecycleOwner, cameraSelector, preview)
     preview.setSurfaceProvider(previewView.surfaceProvider)
+}
+
+@Composable
+fun LensHeight(
+    onValueChange: (String) -> Unit,
+) {
+    val text = remember { mutableStateOf("") }
+    val onChange : (String) -> Unit = { it ->
+        text.value = it
+        onValueChange(it)
+    }
+    TextField(
+        value = text.value,
+        onValueChange = onChange,
+        maxLines = 1,
+        label = { Text(text = "Device height", color = Orange)},
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+        colors = TextFieldDefaults.colors(
+            disabledTextColor = Color.Transparent,
+            focusedTextColor = Orange,
+            unfocusedTextColor = Orange,
+            unfocusedLabelColor = Orange,
+            cursorColor = Orange,
+            focusedContainerColor = Color.Transparent,
+            unfocusedContainerColor = Color.Transparent,
+            errorContainerColor = Color.Transparent,
+            focusedIndicatorColor = Orange,
+            unfocusedIndicatorColor = Orange,
+            disabledIndicatorColor = Orange,
+        ),
+        modifier = Modifier.width(100.dp)
+    )
+}
+
+@Composable
+fun Measurement(
+    title: String,
+    value: String
+) {
+    Column() {
+        Text(text = title, color = Orange, fontSize = 25.sp)
+        Text(text = value, color = Orange, fontSize = 25.sp)
+    }
+}
+
+@Composable
+fun ControlsLayout(
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(top = 20.dp),
+        horizontalArrangement = Arrangement.SpaceEvenly,
+        verticalAlignment = Alignment.CenterVertically
+        ) {
+        LensHeight{}
+        Measurement(title="Height", value = "1,5")
+        LensHeight{}
+    }
 }
