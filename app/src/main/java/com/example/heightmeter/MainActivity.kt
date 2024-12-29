@@ -17,6 +17,7 @@ import androidx.camera.core.CameraSelector
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,6 +27,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -36,6 +39,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
@@ -211,36 +216,67 @@ fun bindPreview(cameraProvider: ProcessCameraProvider,
 }
 
 @Composable
-fun InputValue(
+fun CustomButton(
+    onClick: () -> Unit,
+    label: String
+) {
+    Button (
+        onClick = onClick,
+        colors = ButtonDefaults.buttonColors(
+            containerColor = Color.Gray.copy(alpha = 0.6f),
+            contentColor = Color.Black,
+            disabledContentColor = Color.Black,
+            disabledContainerColor = Color.Gray.copy(alpha = 0.4f)
+        ),
+        modifier = Modifier.width(135.dp),
+        border = BorderStroke(width = 1.dp, color = Color.Black)
+    ) {
+        Text(label)
+    }
+}
+
+@Composable
+fun InputField(
     onValueChange: (String) -> Unit,
     label: String
 ) {
+    val textField = FocusRequester()
     val text = remember { mutableStateOf("") }
     val onChange : (String) -> Unit = { it ->
         text.value = it
         onValueChange(it)
     }
-    TextField(
-        value = text.value,
-        onValueChange = onChange,
-        maxLines = 1,
-        label = { Text(text = label, color = Orange)},
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-        colors = TextFieldDefaults.colors(
-            disabledTextColor = Color.Transparent,
-            focusedTextColor = Orange,
-            unfocusedTextColor = Orange,
-            unfocusedLabelColor = Orange,
-            cursorColor = Orange,
-            focusedContainerColor = Color.Transparent,
-            unfocusedContainerColor = Color.Transparent,
-            errorContainerColor = Color.Transparent,
-            focusedIndicatorColor = Orange,
-            unfocusedIndicatorColor = Orange,
-            disabledIndicatorColor = Orange,
-        ),
+    val onConfirm: () -> Unit = {
+        textField.freeFocus()
+    }
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.width(135.dp)
-    )
+    ) {
+        TextField(
+            value = text.value,
+            onValueChange = onChange,
+            maxLines = 1,
+            label = { Text(text = label, color = Orange)},
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+            colors = TextFieldDefaults.colors(
+                disabledTextColor = Color.Transparent,
+                focusedTextColor = Orange,
+                unfocusedTextColor = Orange,
+                unfocusedLabelColor = Orange,
+                cursorColor = Orange,
+                focusedContainerColor = Color.Transparent,
+                unfocusedContainerColor = Color.Transparent,
+                errorContainerColor = Color.Transparent,
+                focusedIndicatorColor = Orange,
+                unfocusedIndicatorColor = Orange,
+                disabledIndicatorColor = Orange,
+            ),
+            modifier = Modifier.width(125.dp).focusRequester(textField)
+        )
+        CustomButton(onClick = onConfirm, label = "OK")
+    }
+
 }
 
 @Composable
@@ -249,7 +285,8 @@ fun Measurement(
     value: String
 ) {
     Column(
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.padding(20.dp).width(100.dp)
     ) {
         Text(text = label, color = Orange, fontSize = 25.sp)
         Text(text = value, color = Orange, fontSize = 25.sp)
@@ -259,13 +296,20 @@ fun Measurement(
 @Composable
 fun ControlsLayout(
 ) {
+    val height = remember { mutableStateOf("") }
+    val onChange : (String) -> Unit = { it ->
+        height.value = it
+    }
     Row(
         modifier = Modifier.fillMaxWidth().padding(top = 20.dp),
         horizontalArrangement = Arrangement.SpaceEvenly,
-        verticalAlignment = Alignment.CenterVertically,
         ) {
-        InputValue(label = "Enter your height", onValueChange = {})
-        Measurement(label="Height", value = "1,5")
-        InputValue(label = "Enter Distance", onValueChange = {})
+        InputField(label = "Enter your height", onValueChange = onChange)
+        Measurement(label="Height", value = height.value)
+        Column {
+            InputField(label = "Enter Distance", onValueChange = {})
+            CustomButton(onClick = {}, label = "Measure")
+        }
+
     }
 }
