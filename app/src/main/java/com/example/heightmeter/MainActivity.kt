@@ -159,22 +159,13 @@ class MainActivity : ComponentActivity(), SensorEventListener {
     }
 
     private fun getHeightString(height: Double): String {
-        var minFlag = false
-        var maxFlag = false
-        if (height > 999999.9f) {
-            maxFlag = true
-        } else if (height < -99999.9f) {
-            minFlag = true
-        }
-
-        if (minFlag) {
+        if (height < -99999.9f) {
             return "min"
-        } else if (maxFlag) {
-            return "max"
-        } else {
-            val displayHeight = height.toString()
-            return displayHeight
         }
+        if (height > 999999.9f) {
+            return "max"
+        }
+        return height.toString()
     }
 
     private fun computeDistance(lensHeight: Double, distance: Double): Double {
@@ -220,8 +211,9 @@ fun bindPreview(cameraProvider: ProcessCameraProvider,
 }
 
 @Composable
-fun LensHeight(
+fun InputValue(
     onValueChange: (String) -> Unit,
+    label: String
 ) {
     val text = remember { mutableStateOf("") }
     val onChange : (String) -> Unit = { it ->
@@ -232,7 +224,7 @@ fun LensHeight(
         value = text.value,
         onValueChange = onChange,
         maxLines = 1,
-        label = { Text(text = "Device height", color = Orange)},
+        label = { Text(text = label, color = Orange)},
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
         colors = TextFieldDefaults.colors(
             disabledTextColor = Color.Transparent,
@@ -247,17 +239,19 @@ fun LensHeight(
             unfocusedIndicatorColor = Orange,
             disabledIndicatorColor = Orange,
         ),
-        modifier = Modifier.width(100.dp)
+        modifier = Modifier.width(135.dp)
     )
 }
 
 @Composable
 fun Measurement(
-    title: String,
+    label: String,
     value: String
 ) {
-    Column() {
-        Text(text = title, color = Orange, fontSize = 25.sp)
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(text = label, color = Orange, fontSize = 25.sp)
         Text(text = value, color = Orange, fontSize = 25.sp)
     }
 }
@@ -268,10 +262,10 @@ fun ControlsLayout(
     Row(
         modifier = Modifier.fillMaxWidth().padding(top = 20.dp),
         horizontalArrangement = Arrangement.SpaceEvenly,
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
         ) {
-        LensHeight{}
-        Measurement(title="Height", value = "1,5")
-        LensHeight{}
+        InputValue(label = "Enter your height", onValueChange = {})
+        Measurement(label="Height", value = "1,5")
+        InputValue(label = "Enter Distance", onValueChange = {})
     }
 }
