@@ -35,6 +35,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -97,17 +98,11 @@ class MainActivity : ComponentActivity() {
                         ) {
                             Crosshair(color = Orange)
                         }
-
                     }
-                    else -> TextButton(
-                        onClick = { launcher.launch(Manifest.permission.CAMERA) },
-                        modifier = Modifier.fillMaxSize(),
-                    ) {
-                        Text(
-                            text = "Tap to grant camera permission",
-                            color = androidx.compose.ui.graphics.Color.Black,
-                            fontSize = 20.sp
-                        )
+                    else -> {
+                        LaunchedEffect(Unit) {
+                            launcher.launch(Manifest.permission.CAMERA)
+                        }
                     }
                 }
             }
