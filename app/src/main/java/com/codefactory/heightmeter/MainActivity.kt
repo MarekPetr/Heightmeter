@@ -146,7 +146,7 @@ fun bindPreview(cameraProvider: ProcessCameraProvider,
     // Connect the preview use case to the previewView
     val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
     cameraProvider.unbindAll() // Unbind use cases before rebinding
-    val camera = cameraProvider.bindToLifecycle(lifecycleOwner, cameraSelector, preview)
+    cameraProvider.bindToLifecycle(lifecycleOwner, cameraSelector, preview)
     preview.setSurfaceProvider(previewView.surfaceProvider)
 }
 
@@ -360,7 +360,7 @@ private fun computeAngle(gravity: FloatArray): Double {
     val inclineGravity = gravity.clone()
     val normOfG = sqrt(
         inclineGravity[0] * inclineGravity[0] + inclineGravity[1] * inclineGravity[1] + inclineGravity[2] * inclineGravity[2]
-    ) as Float
+    )
 
     // Normalize the accelerometer vector
     inclineGravity[2] = (inclineGravity[2] / normOfG)
