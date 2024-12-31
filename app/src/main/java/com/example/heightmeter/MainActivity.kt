@@ -3,8 +3,6 @@ package com.example.heightmeter
 import android.Manifest
 import android.content.pm.PackageManager
 import android.hardware.Sensor
-import android.hardware.SensorEvent
-import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.os.Bundle
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
@@ -35,6 +33,8 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -53,21 +53,14 @@ import androidx.lifecycle.LifecycleOwner
 import com.example.heightmeter.ui.theme.Orange
 import com.google.common.util.concurrent.ListenableFuture
 import kotlin.math.acos
+import kotlin.math.round
 import kotlin.math.sqrt
 import kotlin.math.tan
 
 
-class MainActivity : ComponentActivity(), SensorEventListener {
-    private var sensorManager: SensorManager? = null
-    private var accelerometer: Sensor? = null
-    private var magnetometer: Sensor? = null
-    private var gravity = FloatArray(0)
-    private var geomagnetic = FloatArray(0)
-
+class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setSensors();
-        initListeners();
         val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
 
         setContent {
@@ -104,78 +97,6 @@ class MainActivity : ComponentActivity(), SensorEventListener {
                 }
             }
         }
-    }
-
-    private fun setSensors() {
-        sensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
-        accelerometer = sensorManager?.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
-        magnetometer = sensorManager?.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD)
-    }
-
-    private fun initListeners() {
-        sensorManager?.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_NORMAL)
-        sensorManager?.registerListener(this, magnetometer, SensorManager.SENSOR_DELAY_NORMAL)
-    }
-
-    override fun onSensorChanged(event: SensorEvent?) {
-        if (event!!.sensor.type == Sensor.TYPE_ACCELEROMETER) {
-            gravity = event.values
-        } else if (event.sensor.type == Sensor.TYPE_MAGNETIC_FIELD) {
-            geomagnetic = event.values
-        }
-    }
-
-    override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
-        return
-    }
-
-    private fun computedAngle(): Double {
-        if (gravity.isEmpty() || geomagnetic.isEmpty()) {
-            throw Error("gravity or geomagnetic not initialized")
-        }
-
-        val R = FloatArray(9)
-        val I = FloatArray(9)
-
-        val gotRotationMatrix = SensorManager.getRotationMatrix(R, I, gravity, geomagnetic)
-        if (!gotRotationMatrix) {
-            throw Error("No rotation Matrix")
-        }
-
-        val orientation = FloatArray(3)
-        SensorManager.getOrientation(R, orientation)
-
-        val inclineGravity = gravity.clone()
-        val normOfG = sqrt(
-            inclineGravity[0] * inclineGravity[0] + inclineGravity[1] * inclineGravity[1] + inclineGravity[2] * inclineGravity[2]
-        ) as Float
-
-        // Normalize the accelerometer vector
-        inclineGravity[2] = (inclineGravity[2] / normOfG)
-
-        val arcCos = acos(inclineGravity[2]).toDouble()
-        val angle = Math.toDegrees(arcCos) - 90.0f
-        return Math.toRadians(angle)
-    }
-
-    private fun computeHeight(angle: Double, lensHeight: Double, distance: Double): Double {
-        val height = tan(angle * distance) + lensHeight
-        return Math.round(height * 10.0) * 0.1
-    }
-
-    private fun getHeightString(height: Double): String {
-        if (height < -99999.9f) {
-            return "min"
-        }
-        if (height > 999999.9f) {
-            return "max"
-        }
-        return height.toString()
-    }
-
-    private fun computeDistance(lensHeight: Double, distance: Double): Double {
-        val newDistance = lensHeight / (-(tan(computedAngle())))
-        return Math.round(newDistance * 10.0) * 0.1
     }
 }
 
@@ -243,11 +164,9 @@ fun InputField(
     val textField = FocusRequester()
     val text = remember { mutableStateOf("") }
     val onChange : (String) -> Unit = { it ->
-        text.value = it
-        onValueChange(it)
-    }
-    val onConfirm: () -> Unit = {
-        textField.freeFocus()
+        val formatted = DecimalFormatter().cleanup(it)
+        text.value = formatted
+        onValueChange(formatted)
     }
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -274,9 +193,7 @@ fun InputField(
             ),
             modifier = Modifier.width(125.dp).focusRequester(textField)
         )
-        CustomButton(onClick = onConfirm, label = "OK")
     }
-
 }
 
 @Composable
@@ -296,20 +213,86 @@ fun Measurement(
 @Composable
 fun ControlsLayout(
 ) {
-    val height = remember { mutableStateOf("") }
-    val onChange : (String) -> Unit = { it ->
-        height.value = it
+    val lensHeight = remember { mutableStateOf("") }
+    val distance = remember { mutableStateOf("") }
+    val gravity by rememberSensorValueAsState(
+        type = Sensor.TYPE_ACCELEROMETER,
+        transformSensorEvent = { event -> event?.values ?: FloatArray(0) },
+    )
+
+    fun getHeight(): String {
+        if (gravity.isEmpty()) {
+            return ""
+        }
+        val lensHeightValue = try {
+            lensHeight.value.toDouble()
+        }
+        catch (e: Throwable) {
+            return ""
+        }
+
+        val distanceValue = try {
+            distance.value.toDouble()
+        }
+        catch (e: Throwable) {
+            return ""
+        }
+
+        try {
+            val angle = computeAngle(gravity)
+            val height = computeHeight(angle, lensHeightValue, distanceValue)
+            return formatHeight(height)
+        }
+        catch (e: Throwable) {
+            return ""
+        }
     }
+
+    val height by remember(gravity, lensHeight, distance) { derivedStateOf { getHeight() }}
+
     Row(
         modifier = Modifier.fillMaxWidth().padding(top = 20.dp),
         horizontalArrangement = Arrangement.SpaceEvenly,
         ) {
-        InputField(label = "Enter your height", onValueChange = onChange)
-        Measurement(label="Height", value = height.value)
-        Column {
-            InputField(label = "Enter Distance", onValueChange = {})
-            CustomButton(onClick = {}, label = "Measure")
-        }
-
+        InputField(label = "Enter your height", onValueChange = { lensHeight.value = it})
+        Measurement(label="Height", value = height)
+        InputField(label = "Enter Distance", onValueChange = { distance.value = it})
     }
+}
+
+fun formatHeight(height: Double): String {
+    val rounded = roundToOneDecimal(height)
+    if (rounded < -999.9) {
+        return "min"
+    }
+    if (rounded > 999.9) {
+        return "max"
+    }
+    return rounded.toString()
+}
+
+private fun roundToOneDecimal(number: Double): Double {
+    return round(number * 10.0) / 10
+}
+
+private fun computeHeight(angle: Double, lensHeight: Double, distance: Double): Double {
+    return (tan(angle) * distance) + lensHeight
+}
+
+private fun computeDistance(angle: Double, lensHeight: Double): Double {
+    return lensHeight / (-(tan(angle)))
+}
+
+private fun computeAngle(gravity: FloatArray): Double {
+    val inclineGravity = gravity.clone()
+    val normOfG = sqrt(
+        inclineGravity[0] * inclineGravity[0] + inclineGravity[1] * inclineGravity[1] + inclineGravity[2] * inclineGravity[2]
+    ) as Float
+
+    // Normalize the accelerometer vector
+    inclineGravity[2] = (inclineGravity[2] / normOfG)
+
+    val arcCos = acos(inclineGravity[2]).toDouble()
+    val angle = Math.toDegrees(arcCos) - 90.0f
+    return Math.toRadians(angle)
 }
