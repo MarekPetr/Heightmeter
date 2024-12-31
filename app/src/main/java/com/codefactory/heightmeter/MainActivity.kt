@@ -1,4 +1,4 @@
-package com.example.heightmeter
+package com.codefactory.heightmeter
 
 import android.Manifest
 import android.content.pm.PackageManager
@@ -57,7 +57,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
-import com.example.heightmeter.ui.theme.Orange
+import com.codefactory.heightmeter.ui.theme.Orange
 import com.google.common.util.concurrent.ListenableFuture
 import kotlin.math.acos
 import kotlin.math.round

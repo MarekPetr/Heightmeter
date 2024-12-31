@@ -1,4 +1,4 @@
-package com.example.heightmeter
+package com.codefactory.heightmeter
 
 import org.junit.Test
 

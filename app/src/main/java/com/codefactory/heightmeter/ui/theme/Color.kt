@@ -1,4 +1,4 @@
-package com.example.heightmeter.ui.theme
+package com.codefactory.heightmeter.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
