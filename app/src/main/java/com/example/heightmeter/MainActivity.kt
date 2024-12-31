@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -43,7 +44,9 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -156,6 +159,7 @@ fun CustomButton(
     }
 }
 
+
 @Composable
 fun InputField(
     onValueChange: (String) -> Unit,
@@ -167,6 +171,7 @@ fun InputField(
         val formatted = DecimalFormatter().cleanup(it)
         onValueChange(formatted)
     }
+    val focusManager = LocalFocusManager.current
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.width(135.dp)
@@ -176,7 +181,15 @@ fun InputField(
             onValueChange = onChange,
             maxLines = 1,
             label = { Text(text = label, color = Orange)},
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Decimal,
+                imeAction = ImeAction.Done
+            ),
+            keyboardActions = KeyboardActions (
+                onDone = {
+                    focusManager.clearFocus()
+                },
+            ),
             colors = TextFieldDefaults.colors(
                 disabledTextColor = Color.Transparent,
                 focusedTextColor = Orange,
