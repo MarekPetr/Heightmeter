@@ -3,7 +3,6 @@ package com.example.heightmeter
 import android.Manifest
 import android.content.pm.PackageManager
 import android.hardware.Sensor
-import android.hardware.SensorManager
 import android.os.Bundle
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.widget.LinearLayout
@@ -37,6 +36,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -159,13 +159,12 @@ fun CustomButton(
 @Composable
 fun InputField(
     onValueChange: (String) -> Unit,
+    value: String,
     label: String
 ) {
     val textField = FocusRequester()
-    val text = remember { mutableStateOf("") }
     val onChange : (String) -> Unit = { it ->
         val formatted = DecimalFormatter().cleanup(it)
-        text.value = formatted
         onValueChange(formatted)
     }
     Column(
@@ -173,7 +172,7 @@ fun InputField(
         modifier = Modifier.width(135.dp)
     ) {
         TextField(
-            value = text.value,
+            value = value,
             onValueChange = onChange,
             maxLines = 1,
             label = { Text(text = label, color = Orange)},
@@ -213,8 +212,8 @@ fun Measurement(
 @Composable
 fun ControlsLayout(
 ) {
-    val lensHeight = remember { mutableStateOf("") }
-    val distance = remember { mutableStateOf("") }
+    val lensHeight = rememberSaveable { mutableStateOf("") }
+    val distance = rememberSaveable { mutableStateOf("") }
     val gravity by rememberSensorValueAsState(
         type = Sensor.TYPE_ACCELEROMETER,
         transformSensorEvent = { event -> event?.values ?: FloatArray(0) },
@@ -254,9 +253,16 @@ fun ControlsLayout(
         modifier = Modifier.fillMaxWidth().padding(top = 20.dp),
         horizontalArrangement = Arrangement.SpaceEvenly,
         ) {
-        InputField(label = "Enter your height", onValueChange = { lensHeight.value = it})
+        InputField(
+            label = "Enter your height",
+            onValueChange = { lensHeight.value = it},
+            value = lensHeight.value)
         Measurement(label="Height", value = height)
-        InputField(label = "Enter Distance", onValueChange = { distance.value = it})
+        InputField(
+            label = "Enter Distance",
+            onValueChange = { distance.value = it},
+            value = distance.value
+        )
     }
 }
 
