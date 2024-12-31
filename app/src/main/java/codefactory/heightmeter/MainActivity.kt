@@ -60,6 +60,7 @@ import androidx.lifecycle.LifecycleOwner
 import codefactory.heightmeter.ui.theme.Orange
 import com.google.common.util.concurrent.ListenableFuture
 import kotlin.math.acos
+import kotlin.math.pow
 import kotlin.math.round
 import kotlin.math.sqrt
 import kotlin.math.tan
@@ -305,7 +306,7 @@ fun ControlsLayout(
             return
         }
         val computedDistance = computeDistance(angle, lensHeightValue)
-        val rounded = roundToOneDecimal(computedDistance)
+        val rounded = roundToDecimals(computedDistance)
         distance.value = rounded.toString()
     }
 
@@ -334,18 +335,19 @@ fun ControlsLayout(
 }
 
 fun formatHeight(height: Double): String {
-    val rounded = roundToOneDecimal(height)
-    if (rounded < -999.9) {
+    val rounded = roundToDecimals(height)
+    val limit = 10000
+    if (rounded <= -limit) {
         return "min"
     }
-    if (rounded > 999.9) {
+    if (rounded >= limit) {
         return "max"
     }
     return rounded.toString()
 }
 
-private fun roundToOneDecimal(number: Double): Double {
-    return round(number * 10.0) / 10
+private fun roundToDecimals(number: Double): Double {
+    return round(number * 100) / 100
 }
 
 private fun computeHeight(angle: Double, lensHeight: Double, distance: Double): Double {
