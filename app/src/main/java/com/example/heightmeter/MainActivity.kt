@@ -15,6 +15,7 @@ import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,6 +23,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -42,12 +44,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -86,6 +90,13 @@ class MainActivity : ComponentActivity() {
                     true -> Box {
                         CameraPreview(cameraProviderFuture)
                         ControlsLayout()
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Crosshair(color = Orange)
+                        }
+
                     }
                     else -> TextButton(
                         onClick = { launcher.launch(Manifest.permission.CAMERA) },
@@ -219,6 +230,32 @@ fun Measurement(
     ) {
         Text(text = label, color = Orange, fontSize = 25.sp)
         Text(text = value, color = Orange, fontSize = 25.sp)
+    }
+}
+
+@Composable
+fun Crosshair(modifier: Modifier = Modifier, color: Color = Color.Black, size: Dp = 100.dp, strokeWidth: Float = 4f) {
+    Canvas(modifier = modifier.size(size)) {
+        val canvasWidth = size.toPx()
+        val canvasHeight = size.toPx()
+        val centerX = canvasWidth / 2
+        val centerY = canvasHeight / 2
+
+        // Draw horizontal line
+        drawLine(
+            color = color,
+            start = Offset(x = 0f, y = centerY),
+            end = Offset(x = canvasWidth, y = centerY),
+            strokeWidth = strokeWidth
+        )
+
+        // Draw vertical line
+        drawLine(
+            color = color,
+            start = Offset(x = centerX, y = 0f),
+            end = Offset(x = centerX, y = canvasHeight),
+            strokeWidth = strokeWidth
+        )
     }
 }
 
