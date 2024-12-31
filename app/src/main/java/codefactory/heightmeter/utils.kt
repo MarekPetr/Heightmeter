@@ -1,4 +1,4 @@
-package com.codefactory.heightmeter
+package codefactory.heightmeter
 
 class DecimalFormatter {
 

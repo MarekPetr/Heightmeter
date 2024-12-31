@@ -1,4 +1,4 @@
-package com.codefactory.heightmeter
+package codefactory.heightmeter
 
 import android.content.Context
 import android.hardware.Sensor

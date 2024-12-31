@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.heightmeter"
+    namespace = "codefactory.heightmeter"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.example.heightmeter"
+        applicationId = "codefactory.heightmeter"
         minSdk = 24
         targetSdk = 34
         versionCode = 1
