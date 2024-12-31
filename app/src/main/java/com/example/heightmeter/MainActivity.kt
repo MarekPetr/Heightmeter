@@ -296,6 +296,19 @@ fun ControlsLayout(
             return ""
         }
     }
+    fun calculateDistance() {
+        val angle = computeAngle(gravity)
+        val lensHeightValue = try {
+            lensHeight.value.toDouble()
+        }
+        catch (e: Throwable) {
+            return
+        }
+        val computedDistance = computeDistance(angle, lensHeightValue)
+        val rounded = roundToOneDecimal(computedDistance)
+        distance.value = rounded.toString()
+    }
+
 
     val height by remember(gravity, lensHeight, distance) { derivedStateOf { getHeight() }}
 
@@ -306,13 +319,17 @@ fun ControlsLayout(
         InputField(
             label = "Enter your height",
             onValueChange = { lensHeight.value = it},
-            value = lensHeight.value)
-        Measurement(label="Height", value = height)
-        InputField(
-            label = "Enter Distance",
-            onValueChange = { distance.value = it},
-            value = distance.value
+            value = lensHeight.value
         )
+        Measurement(label="Height", value = height)
+        Column {
+            InputField(
+                label = "Enter Distance",
+                onValueChange = { distance.value = it },
+                value = distance.value
+            )
+            CustomButton(label = "Click base", onClick = { calculateDistance()})
+        }
     }
 }
 
