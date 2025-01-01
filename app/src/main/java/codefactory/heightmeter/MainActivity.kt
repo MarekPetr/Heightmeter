@@ -264,7 +264,6 @@ fun ControlsLayout(
         type = Sensor.TYPE_ACCELEROMETER,
         transformSensorEvent = { event -> event?.values ?: FloatArray(0) },
     )
-    val lastGravityValues = rememberSaveable { mutableStateOf(FloatArray(0)) }
 
     fun getHeight(): String {
         if (gravity.isEmpty()) {
@@ -285,7 +284,7 @@ fun ControlsLayout(
         }
 
         try {
-            val angle = computeAngle(gravity, lastGravityValues.value)
+            val angle = computeAngle(gravity)
             val height = computeHeight(angle, lensHeightValue, distanceValue)
             return formatHeight(height)
         }
@@ -294,7 +293,7 @@ fun ControlsLayout(
         }
     }
     fun calculateDistance() {
-        val angle = computeAngle(gravity, lastGravityValues.value)
+        val angle = computeAngle(gravity)
         val lensHeightValue = try {
             lensHeight.value.toDouble()
         }
@@ -353,23 +352,12 @@ private fun computeDistance(angle: Double, lensHeight: Double): Double {
     return lensHeight / (-(tan(angle)))
 }
 
-private fun computeAngle(currentValues: FloatArray, lastValues: FloatArray): Double {
-    // low pass filter
-    val alpha = 0.8f
-    for (i in lastValues.indices) {
-        lastValues[i] = alpha * lastValues[i] + (1 - alpha) * currentValues[i]
-    }
-
-    val newValues = if (lastValues.isNotEmpty()) lastValues.clone() else currentValues.clone()
-
+private fun computeAngle(gravity: FloatArray): Double {
     val normOfG = sqrt(
-        newValues[0] * newValues[0] + newValues[1] * newValues[1] + newValues[2] * newValues[2]
+        gravity[0] * gravity[0] + gravity[1] * gravity[1] + gravity[2] * gravity[2]
     )
 
-    // Normalize the accelerometer vector
-    newValues[2] = (newValues[2] / normOfG)
-
-    val arcCos = acos(newValues[2]).toDouble()
+    val arcCos = acos(gravity[2] / normOfG).toDouble()
     val angle = Math.toDegrees(arcCos) - 90.0f
     return Math.toRadians(angle)
 }
