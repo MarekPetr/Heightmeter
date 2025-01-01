@@ -16,6 +16,8 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -171,14 +173,14 @@ fun CustomButton(
 fun InputField(
     onValueChange: (String) -> Unit,
     value: String,
-    label: String
+    label: String,
 ) {
-    val textField = FocusRequester()
     val onChange : (String) -> Unit = { it ->
         val formatted = DecimalFormatter().cleanup(it)
         onValueChange(formatted)
     }
     val focusManager = LocalFocusManager.current
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.width(135.dp)
@@ -210,7 +212,7 @@ fun InputField(
                 unfocusedIndicatorColor = Orange,
                 disabledIndicatorColor = Orange,
             ),
-            modifier = Modifier.width(125.dp).focusRequester(textField)
+            modifier = Modifier.width(125.dp)
         )
     }
 }
@@ -306,7 +308,19 @@ fun ControlsLayout(
     }
 
     val height by remember(gravity, lensHeight, distance) { derivedStateOf { getHeight() }}
-
+    val focusManager = LocalFocusManager.current
+    val interactionSource = remember { MutableInteractionSource() }
+    Box(
+        modifier = Modifier.
+            fillMaxSize().
+            clickable(
+                onClick = {
+                    focusManager.clearFocus()
+                },
+                interactionSource = interactionSource,
+                indication = null
+            )
+    )
     Row(
         modifier = Modifier.fillMaxWidth().padding(top = 20.dp),
         horizontalArrangement = Arrangement.SpaceEvenly,
@@ -314,16 +328,19 @@ fun ControlsLayout(
         InputField(
             label = "Enter your height",
             onValueChange = { lensHeight.value = it},
-            value = lensHeight.value
+            value = lensHeight.value,
         )
         Measurement(label="Height", value = height)
         Column {
             InputField(
                 label = "Enter Distance",
                 onValueChange = { distance.value = it },
-                value = distance.value
+                value = distance.value,
             )
-            CustomButton(label = "Click base", onClick = { calculateDistance()})
+            CustomButton(label = "Click base", onClick = {
+                focusManager.clearFocus()
+                calculateDistance()
+            })
         }
     }
 }
