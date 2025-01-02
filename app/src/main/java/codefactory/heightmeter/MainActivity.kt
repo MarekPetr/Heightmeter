@@ -2,6 +2,7 @@ package codefactory.heightmeter
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.graphics.fonts.FontStyle
 import android.hardware.Sensor
 import android.os.Bundle
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
@@ -16,6 +17,7 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -33,7 +35,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
@@ -45,13 +46,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.Dp
@@ -63,7 +63,6 @@ import androidx.lifecycle.LifecycleOwner
 import codefactory.heightmeter.ui.theme.Orange
 import com.google.common.util.concurrent.ListenableFuture
 import kotlin.math.acos
-import kotlin.math.pow
 import kotlin.math.round
 import kotlin.math.sqrt
 import kotlin.math.tan
@@ -89,23 +88,31 @@ class MainActivity : ComponentActivity() {
                     rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
                         isPermissionGranted.value = isGranted
                     }
-
+                val sensorAvailable = isSensorAvailable(Sensor.TYPE_ACCELEROMETER)
                 when (isPermissionGranted.value) {
-                    true -> Box {
-                        CameraPreview(cameraProviderFuture)
-                        ControlsLayout()
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Crosshair(color = Orange)
+                    true ->
+                        if (!sensorAvailable) {
+                            Box(modifier = Modifier.fillMaxSize().background(color = Color.DarkGray), contentAlignment = Alignment.Center) {
+                                Text(text="Accelerometer not found!", color = Color.Red, fontWeight = FontWeight.Bold, fontSize = 27.sp)
+                            }
                         }
-                    }
-                    else -> {
-                        LaunchedEffect(Unit) {
-                            launcher.launch(Manifest.permission.CAMERA)
+                        else {
+                            Box {
+                                CameraPreview(cameraProviderFuture)
+                                ControlsLayout()
+                                Box(
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Crosshair(color = Orange)
+                                }
+                            }
                         }
-                    }
+                        else -> {
+                            LaunchedEffect(Unit) {
+                                launcher.launch(Manifest.permission.CAMERA)
+                            }
+                        }
                 }
             }
         }
@@ -311,9 +318,9 @@ fun ControlsLayout(
     val focusManager = LocalFocusManager.current
     val interactionSource = remember { MutableInteractionSource() }
     Box(
-        modifier = Modifier.
-            fillMaxSize().
-            clickable(
+        modifier = Modifier
+            .fillMaxSize()
+            .clickable(
                 onClick = {
                     focusManager.clearFocus()
                 },
@@ -321,6 +328,7 @@ fun ControlsLayout(
                 indication = null
             )
     )
+
     Row(
         modifier = Modifier.fillMaxWidth().padding(top = 20.dp),
         horizontalArrangement = Arrangement.SpaceEvenly,

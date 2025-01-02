@@ -29,7 +29,7 @@ fun <T> rememberSensorValueAsState(
     val sensorEventCallbackFlow = remember {
         sensorEventCallbackFlow(
             context = context,
-            type = type
+            sensorType = type
         )
     }
     val sensorEvent by sensorEventCallbackFlow.collectAsStateWithLifecycle(
@@ -39,15 +39,36 @@ fun <T> rememberSensorValueAsState(
     return remember { derivedStateOf { transformSensorEvent(sensorEvent.event) } }
 }
 
+internal fun getSensorManager(context: Context): SensorManager {
+    return ContextCompat.getSystemService(context, SensorManager::class.java)
+        ?: throw RuntimeException("SensorManager is null")
+}
+
+internal fun getSensor(sensorManager: SensorManager, sensorType: Int): Sensor {
+    val sensor = sensorManager.getDefaultSensor(sensorType)
+        ?: throw RuntimeException("Sensor of type $sensorType is not available, use one of the isSensorAvailable functions")
+    return sensor
+}
+
+@Composable
+fun isSensorAvailable(sensorType: Int): Boolean {
+    val context = LocalContext.current
+    try {
+        val sensorManager = getSensorManager(context)
+        getSensor(sensorManager, sensorType)
+    }
+    catch (e: Throwable) {
+        return false
+    }
+    return true
+}
+
 internal fun sensorEventCallbackFlow(
     context: Context,
-    type: Int,
+    sensorType: Int,
 ): Flow<ComposableSensorEvent> = callbackFlow {
-    val sensorManager = ContextCompat.getSystemService(context, SensorManager::class.java)
-        ?: throw RuntimeException("SensorManager is null")
-
-    val sensor = sensorManager.getDefaultSensor(type)
-        ?: throw RuntimeException("Sensor of type $type is not available, use one of the isSensorAvailable functions")
+    val sensorManager = getSensorManager(context)
+    val sensor = getSensor(sensorManager, sensorType)
 
     val listener = object : SensorEventListener {
         override fun onSensorChanged(event: SensorEvent) {
