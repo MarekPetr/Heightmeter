@@ -95,8 +95,14 @@ class MainActivity : ComponentActivity() {
                 when (isPermissionGranted.value) {
                     true ->
                         if (!sensorAvailable) {
-                            Box(modifier = Modifier.fillMaxSize().background(color = Color.DarkGray), contentAlignment = Alignment.Center) {
-                                Text(text="Accelerometer not found!", color = Color.Red, fontWeight = FontWeight.Bold, fontSize = 27.sp)
+                            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                Text(
+                                    text="Accelerometer not found!",
+                                    modifier = Modifier.wrapContentSize(),
+                                    color = Color.Red,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 27.sp
+                                )
                             }
                         }
                         else {
@@ -114,6 +120,17 @@ class MainActivity : ComponentActivity() {
                         else -> {
                             LaunchedEffect(Unit) {
                                 launcher.launch(Manifest.permission.CAMERA)
+                            }
+                            Box(modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center,
+                            )
+                            {
+                                Text(
+                                    text="No camera permissions!",
+                                    modifier = Modifier.wrapContentSize(),
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 27.sp
+                                )
                             }
                         }
                 }
