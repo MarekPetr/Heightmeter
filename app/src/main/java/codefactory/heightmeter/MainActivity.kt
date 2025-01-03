@@ -2,7 +2,6 @@ package codefactory.heightmeter
 
 import android.Manifest
 import android.content.pm.PackageManager
-import android.graphics.fonts.FontStyle
 import android.hardware.Sensor
 import android.os.Bundle
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
@@ -10,6 +9,7 @@ import android.widget.LinearLayout
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.Preview
@@ -28,7 +28,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
@@ -71,6 +73,7 @@ import kotlin.math.tan
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
         val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
 
         setContent {
@@ -330,7 +333,7 @@ fun ControlsLayout(
     )
 
     Row(
-        modifier = Modifier.fillMaxWidth().padding(top = 20.dp),
+        modifier = Modifier.fillMaxWidth().systemBarsPadding(),
         horizontalArrangement = Arrangement.SpaceEvenly,
         ) {
         InputField(
@@ -381,7 +384,6 @@ private fun computeAngle(gravity: FloatArray): Double {
     val normOfG = sqrt(
         gravity[0] * gravity[0] + gravity[1] * gravity[1] + gravity[2] * gravity[2]
     )
-
     val arcCos = acos(gravity[2] / normOfG).toDouble()
     val angle = Math.toDegrees(arcCos) - 90.0f
     return Math.toRadians(angle)
