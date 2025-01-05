@@ -80,8 +80,7 @@ internal fun sensorEventCallbackFlow(
         }
     }
 
-    val successful = sensorManager.registerListener(listener, sensor, SensorManager.SENSOR_DELAY_NORMAL)
-    if (!successful) throw RuntimeException("Failed to register listener for sensor ${sensor.name}")
+    sensorManager.registerListener(listener, sensor, SensorManager.SENSOR_DELAY_NORMAL)
     awaitClose { sensorManager.unregisterListener(listener) }
 }
 
